@@ -34,7 +34,12 @@ export class GamesService {
       const href = $(element).attr('href');
       const title = $(element).find('span.title').text().trim();
 
-      if (href && POST_REGEX.test(href) && title.length > 0) {
+      if (
+        href &&
+        POST_REGEX.test(href) &&
+        title.length > 0 &&
+        posts.length < 10
+      ) {
         const id = parseInt(href.split('/')[3]);
         posts.push({ id, title, url: href });
       }
@@ -45,10 +50,14 @@ export class GamesService {
       orderBy: { id: 'desc' },
     });
 
-    const candidates = posts.reduce(
-      (acc, x) => (x.id > lastPostId?.id ? [...acc, x] : acc),
-      [] as NikkeCodePost[],
-    );
+    const candidates = lastPostId
+      ? posts.reduce(
+          (acc, x) => (x.id > lastPostId.id ? [...acc, x] : acc),
+          [] as NikkeCodePost[],
+        )
+      : posts;
+
+    console.log(lastPostId, candidates);
 
     if (candidates.length === 0) return [];
 
