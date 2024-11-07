@@ -20,7 +20,7 @@ jobs:
         run: npm run build
 
       - name: Run Tests (not implemented)
-        run: # no tests ready
+        run: echo "No tests implemented"
 
       - name: Install Cloudflared
         run: |
