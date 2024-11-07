@@ -1,0 +1,50 @@
+name: CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Chechout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Run Tests (not implemented)
+        run: # no tests ready
+
+      - name: Install Cloudflared
+        run: |
+          # Add cloudflare gpg key
+          sudo mkdir -p --mode=0755 /usr/share/keyrings
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+          # Add this repo to your apt repositories
+          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+
+          # install cloudflared
+          sudo apt-get update && sudo apt-get install cloudflared
+
+      - name: Set Up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Configure SSH
+        run: |
+          echo -e "Host ssh.enc2586.com\n  ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          echo -e "Host *\n  StrictHostKeyChecking no" >> ~/.ssh/config
+
+      - name: Trnasfer Files to Remote Server
+        run: scp -r dist/ prisma/ enc2586@ssh.enc2586.com:~/automation/
